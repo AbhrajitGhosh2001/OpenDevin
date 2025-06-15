@@ -3,6 +3,7 @@ import atexit
 from typing import Tuple, Dict
 from opendevin.sandbox.sandbox import Sandbox, BackgroundCommand
 from opendevin import config
+from security import safe_command
 
 # ===============================================================================
 #  ** WARNING **
@@ -29,8 +30,7 @@ class LocalBox(Sandbox):
 
     def execute(self, cmd: str) -> Tuple[int, str]:
         try:
-            completed_process = subprocess.run(
-                cmd, shell=True, text=True, capture_output=True,
+            completed_process = safe_command.run(subprocess.run, cmd, shell=True, text=True, capture_output=True,
                 timeout=self.timeout, cwd=config.get('WORKSPACE_BASE')
             )
             return completed_process.returncode, completed_process.stdout
@@ -38,8 +38,7 @@ class LocalBox(Sandbox):
             return -1, 'Command timed out'
 
     def execute_in_background(self, cmd: str) -> BackgroundCommand:
-        process = subprocess.Popen(
-            cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+        process = safe_command.run(subprocess.Popen, cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
             text=True, cwd=config.get('WORKSPACE_BASE')
         )
         bg_cmd = BackgroundCommand(
